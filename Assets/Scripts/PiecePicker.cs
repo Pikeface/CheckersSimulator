@@ -53,6 +53,7 @@ public class PiecePicker : MonoBehaviour
                 GizmosGL.AddSphere(hit.point, 0.5f);
                 // move the piece to position
                 Vector3 piecePos = hit.point + Vector3.up * pieceHeight;
+
                 selectedPiece.transform.position = piecePos;
 
             }

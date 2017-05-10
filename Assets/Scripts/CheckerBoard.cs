@@ -97,7 +97,7 @@ public class CheckerBoard : MonoBehaviour
         // set pieces new grid coordinates 
         piece.gridX = x;
         piece.gridZ = z;
-        // move physicall to board coordinates
+        // move physical to board coordinates
         piece.transform.position = bottomLeft + Vector3.right * xOffset + Vector3.forward * zOffset;
         // set pieces array slot
         pieces[x, z] = piece;
