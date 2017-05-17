@@ -8,12 +8,13 @@ using GGL;
 public class PiecePicker : MonoBehaviour
 {
 
-    public float pieceHeight = 5f;
-    public float rayDistance = 1000f;
+    public float pieceHeight = 3f;
+    public float rayDistance = 100f;
     public LayerMask selectionIgnoreLayer;
 
     private Piece selectedPiece;
     private CheckerBoard board;
+    private Vector3 hitPoint;
 
 
     // Use this for initialization
@@ -48,7 +49,7 @@ public class PiecePicker : MonoBehaviour
             if (Physics.Raycast(ray, out hit, rayDistance, ~selectionIgnoreLayer))
 
             {
-                // obtain hit point
+                
                 // GizmosGL.color = Color.red;
                 GizmosGL.AddSphere(hit.point, 0.5f);
                 // move the piece to position
@@ -56,8 +57,22 @@ public class PiecePicker : MonoBehaviour
 
                 selectedPiece.transform.position = piecePos;
 
+                // obtain hit point
+                hitPoint = hit.point;
+                
             }
+            // check if mouse button was released 
+            if (Input.GetMouseButtonUp(0))
+            {
+                // Move piece to hit point 
+                Piece piece = selectedPiece.GetComponent<Piece>();
+                board.PlacePiece(piece, hitPoint);
 
+
+                // deselect piece 
+                selectedPiece = null;
+
+            }
         }
     }
 
@@ -65,6 +80,11 @@ public class PiecePicker : MonoBehaviour
 
     void CheckSelection()
     {
+        // if there is a lready a selected piece
+        if (selectedPiece != null)
+            return; // Exit the function
+
+
         // create a ray from camera mouse position to world
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         GizmosGL.AddLine(ray.origin, ray.origin + ray.direction * rayDistance);

@@ -1,10 +1,41 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Xml;
+using System.Xml.Serialization;
+using System.IO;
+
+
+[XmlRoot("CheckerBoardData")]
+
+public class CheckerBoardData
+{
+    public PieceData[] pieces;
+
+    public void Save(string path)
+    {
+        var serializer = new XmlSerializer(typeof(CheckerBoardData));
+        using (var stream = new FileStream(path, FileMode.Create))
+        {
+            serializer.Serialize(stream, this);
+        }
+    }
+
+    public static CheckerBoardData Load(string path)
+    {
+        var serializer = new XmlSerializer(typeof(CheckerBoardData));
+        using (var stream = new FileStream(path, FileMode.Open))
+        {
+            return serializer.Deserialize(stream) as CheckerBoardData;
+
+        }
+    }
+
+}
 
 public class CheckerBoard : MonoBehaviour
 {
-
+    public string fileName;
     public GameObject blackPiece;
     public GameObject whitePiece;
 
@@ -13,9 +44,11 @@ public class CheckerBoard : MonoBehaviour
 
     public Piece[,] pieces;
 
-    private int halfBoardX, halfBoradZ;
+    private int halfBoardX, halfBoardZ;
     private float pieceDiameter;
     private Vector3 bottomLeft;
+    private CheckerBoardData data;
+
 
 
 
@@ -24,12 +57,17 @@ public class CheckerBoard : MonoBehaviour
     {
         // calculate a few values
         halfBoardX = boardX / 2;
-        halfBoradZ = boardZ / 2;
+        halfBoardZ = boardZ / 2;
         pieceDiameter = pieceRadius * 2;
-        bottomLeft = transform.position - Vector3.right * halfBoardX - Vector3.forward * halfBoradZ;
+        bottomLeft = transform.position - Vector3.right * halfBoardX - Vector3.forward * halfBoardZ;
 
+        string path = Application.persistentDataPath + "/" + fileName;
+        // string path = Application.persistentDataPath + fileName + "/" + fileName;
+        //data = CheckerBoardData.Load(path);
+        
         CreateGrid();
-
+        data = new CheckerBoardData();
+        data.Save(path);        
     }
 
     void CreateGrid()
@@ -69,7 +107,7 @@ public class CheckerBoard : MonoBehaviour
                 int gridZ = z;
                 // generate piece
                 GeneratePiece(blackPiece, gridX, gridZ);
-                
+
             }
         }
         #endregion
@@ -104,5 +142,66 @@ public class CheckerBoard : MonoBehaviour
 
     }
 
+    public void PlacePiece(Piece piece, Vector3 position)
+    {
+        // translate position to coordinate array 
+        float percentX = (position.x + halfBoardX) / boardX;
+        float percentZ = (position.z + halfBoardZ) / boardZ;
 
+        percentX = Mathf.Clamp01(percentX);
+        percentZ = Mathf.Clamp01(percentZ);
+
+        int x = Mathf.RoundToInt((boardX - 1) * percentX);
+        int z = Mathf.RoundToInt((boardZ - 1) * percentZ);
+
+        // get old piece from that coordinate
+        Piece oldPiece = pieces[x, z];
+
+        // if there is an old piece in slot currently then swap pieces 
+        if (oldPiece != null)
+        {
+            // swap pieces 
+            SwapPieces(piece, oldPiece);
+        }
+        else
+        {
+            // place the piece 
+            int oldX = piece.gridX;
+            int oldZ = piece.gridZ;
+            // set old position to null 
+            pieces[oldX, oldZ] = null;
+            // set new position 
+            PlacePiece(piece, x, z);
+
+        }
+
+
+
+    }
+    void SwapPieces(Piece pieceA, Piece pieceB)
+    {
+        // check if pieceA OR pieceB is nuyll 
+        // return 
+        if (pieceA == null || pieceB == null)
+            return; // exit the function
+
+        // PieceA grid pos 
+        int pAX = pieceA.gridX;
+        int pAZ = pieceA.gridZ;
+
+        // PieceB grid pos 
+        int pBX = pieceB.gridX;
+        int pBZ = pieceB.gridZ;
+
+
+        // Swap pieces 
+        PlacePiece(pieceA, pBX, pBZ);
+        PlacePiece(pieceB, pAX, pAZ);
+
+
+
+
+    }
 }
+
+
